@@ -258,7 +258,12 @@ def editar_reserva(request, id):
         messages.success(request, 'Reserva actualizada exitosamente.')
         return redirect('/reservas/')
 
+    # Formatea las fechas para que sean compatibles con el atributo value del input tipo date
+    reserva.fecha_inicio = reserva.fecha_inicio.strftime('%Y-%m-%d')
+    reserva.fecha_fin = reserva.fecha_fin.strftime('%Y-%m-%d')
+
     return render(request, 'editar_reserva.html', {'reserva': reserva, 'campistas': campistas})
+
 
 # Función para eliminar una reserva existente
 def eliminar_reserva(request, id):
