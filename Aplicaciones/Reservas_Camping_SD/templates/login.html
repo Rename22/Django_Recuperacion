@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/izitoast/dist/css/iziToast.min.css">
+    <title>Inicio de Sesión</title>
+    <style>
+        /* Estilo para la imagen de fondo */
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://img.freepik.com/fotos-premium/escena-acampada-horizontal_198067-949440.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(4px); 
+            z-index: -1; 
+        }
+
+        /* Estilo adicional para ajustar el formulario */
+        .card {
+            background-color: rgb(154, 155, 160, 0.55); 
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Imagen de fondo difuminada -->
+    <div class="background-image"></div>
+
+    <div class="d-flex justify-content-center align-items-center vh-100">
+        <div class="card shadow-lg" style="width: 25rem;">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-4">Inicio de Sesión</h4>
+                <form method="POST" action="/">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="usuario" class="form-label text-light">Usuario</label>
+                        <input type="text" class="form-control" id="usuario" name="usuario" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contrasena" class="form-label text-light">Contraseña</label>
+                        <input type="password" class="form-control" id="contrasena" name="contrasena" required>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn w-100" style="background-color: rgb(115, 201, 130); border-color: rgb(115, 201, 130);">Ingresar</button>
+
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="/registro/" class="text-decoration-none text-dark">¿No tienes cuenta? Regístrate aquí</a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/izitoast/dist/js/iziToast.min.js"></script>
+    {% if messages %}
+        <script>
+            {% for mensaje in messages %}
+                iziToast.{{ mensaje.tags }}({
+                    message: '{{ mensaje }}',
+                    position: 'topRight'
+                });
+            {% endfor %}
+        </script>
+    {% endif %}
+</body>
+</html>

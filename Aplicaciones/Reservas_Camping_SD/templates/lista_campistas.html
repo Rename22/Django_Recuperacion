@@ -1,0 +1,112 @@
+{% extends "plantilla.html" %}
+
+{% block titulo %}Lista de Campistas{% endblock %}
+
+{% block contenido %}
+<div class="container">
+    <!-- Título de la página -->
+    <h2 class="mb-4">Campistas</h2>
+
+    <!-- Barra de búsqueda y botón para agregar campista -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Campo de búsqueda para filtrar campistas por nombre, correo, etc. -->
+        <input type="text" id="buscadorCampistas" class="form-control me-3" placeholder="Buscar campistas..." style="max-width: 300px;">
+        <!-- Botón para redirigir al formulario de creación de campistas -->
+        <a href="/campistas/crear/" class="btn btn-success">Agregar Campista</a>
+    </div>
+
+    <!-- Tabla que muestra la lista de campistas registrados -->
+    <table class="table table-bordered" id="tablaCampistas">
+        <!-- Encabezado de la tabla -->
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre Completo</th>
+                <th>Correo Electrónico</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Bucle para recorrer y mostrar cada campista -->
+            {% for campista in campistas %}
+            <tr>
+                <!-- Nombre completo del campista -->
+                <td>{{ campista.nombre_completo }}</td>
+                <!-- Correo electrónico del campista -->
+                <td>{{ campista.correo_electronico }}</td>
+                <!-- Teléfono del campista -->
+                <td>{{ campista.telefono }}</td>
+                <!-- Dirección del campista, o mensaje indicando que no tiene dirección -->
+                <td>
+                    {% if campista.direccion %}
+                        {{ campista.direccion }}
+                    {% else %}
+                        <span class="text-muted">Sin dirección</span>
+                    {% endif %}
+                </td>
+                <!-- Botones de acción: editar o eliminar -->
+                <td>
+                    <!-- Botón para redirigir al formulario de edición del campista -->
+                    <a href="/campistas/editar/{{ campista.id }}/" 
+                       class="btn btn-warning btn-sm me-2">
+                       Editar
+                    </a>
+                    <!-- Botón para eliminar el campista, con confirmación -->
+                    <a href="#" 
+                       class="btn btn-danger btn-sm" 
+                       onclick="{% if campista.tiene_reservas %}mostrarAdvertencia() {% else %}confirmarEliminacion('{{ campista.id }}', '{{ campista.nombre_completo }}'){% endif %}">
+                       Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <!-- Mensaje mostrado si no hay campistas registrados -->
+            <tr>
+                <td colspan="5" class="text-center">No hay campistas registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    //vodigo javascript
+    // Función para filtrar campistas según lo ingresado en el buscador
+    document.getElementById('buscadorCampistas').addEventListener('input', function () {
+        let filtro = this.value.toLowerCase(); // Convierte el texto ingresado a minúsculas
+        let filas = document.querySelectorAll('#tablaCampistas tbody tr'); // Selecciona todas las filas de la tabla
+        filas.forEach(fila => {
+            let textoFila = fila.textContent.toLowerCase(); // Convierte el contenido de la fila a minúsculas
+            fila.style.display = textoFila.includes(filtro) ? '' : 'none'; // Muestra u oculta la fila según el filtro
+        });
+    });
+
+    // Función para confirmar la eliminación de un campista
+    function confirmarEliminacion(id, nombre) {
+        iziToast.question({
+            message: `¿Quieres eliminar al campista "${nombre}"?`, // Mensaje de confirmación
+            position: 'center', // Posición del mensaje
+            buttons: [
+                // Botón para confirmar la eliminación
+                ['<button>Confirmar</button>', function (instance, toast) {
+                    window.location.href = `/campistas/eliminar/${id}/`; // Redirige a la URL de eliminación
+                    instance.hide({ transitionOut: 'fadeOut' }, toast, 'button'); // Cierra el mensaje de confirmación
+                }, true],
+                // Botón para cancelar la acción
+                ['<button>Cancelar</button>', function (instance, toast) {
+                    instance.hide({ transitionOut: 'fadeOut' }, toast, 'button'); // Cierra el mensaje de confirmación
+                }]
+            ]
+        });
+    }
+
+    // Función para mostrar advertencia si el campista tiene reservas asociadas
+    function mostrarAdvertencia() {
+        iziToast.error({
+            message: 'No puedes eliminar un campista con reservas asociadas.', // Mensaje de error
+            position: 'topRight' // Posición del mensaje de error
+        });
+    }
+</script>
+{% endblock %}

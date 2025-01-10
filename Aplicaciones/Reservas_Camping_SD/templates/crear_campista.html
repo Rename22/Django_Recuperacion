@@ -1,0 +1,77 @@
+{% extends "plantilla.html" %}
+
+{% block titulo %}Crear Campista{% endblock %}
+
+{% block contenido %}
+<div class="container">
+    <h2 class="mb-4">Crear Campista</h2>
+    <form id="form_crear_campista" method="POST" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="nombre_completo" class="form-label">Nombre Completo</label>
+            <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required>
+        </div>
+        <div class="mb-3">
+            <label for="correo_electronico" class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" required>
+        </div>
+        <div class="mb-3">
+            <label for="telefono" class="form-label">Teléfono</label>
+            <input type="text" class="form-control" id="telefono" name="telefono" required>
+        </div>
+        <div class="mb-3">
+            <label for="direccion" class="form-label">Dirección</label>
+            <textarea class="form-control" id="direccion" name="direccion" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="/campistas/" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        $("#form_crear_campista").validate({
+            rules: {
+                nombre_completo: {
+                    required: true,
+                    minlength: 3
+                },
+                correo_electronico: {
+                    required: true,
+                    email: true
+                },
+                telefono: {
+                    required: true,
+                    minlength: 10
+                }
+            },
+            messages: {
+                nombre_completo: {
+                    required: "El nombre completo es obligatorio.",
+                    minlength: "Debe tener al menos 3 caracteres."
+                },
+                correo_electronico: {
+                    required: "El correo electrónico es obligatorio.",
+                    email: "Por favor, introduce un correo válido."
+                },
+                telefono: {
+                    required: "El teléfono es obligatorio.",
+                    minlength: "Debe tener al menos 10 números."
+                }
+            }
+        });
+    });
+</script>
+<style>
+    label.error {
+        color: red;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    input.error, textarea.error {
+        border: 2px solid red;
+    }
+</style>
+{% endblock %}

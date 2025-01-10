@@ -1,0 +1,110 @@
+{% extends "plantilla.html" %}
+
+{% block titulo %}Lista de Reservas{% endblock %}
+
+{% block contenido %}
+<div class="container">
+    <!-- Título principal de la página -->
+    <h2 class="mb-4">Reservas</h2>
+    
+    <!-- Barra de búsqueda y botón para agregar nueva reserva -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Campo de texto para buscar reservas por cualquier criterio -->
+        <input type="text" id="buscadorReservas" class="form-control me-3" placeholder="Buscar reservas..." style="max-width: 300px;">
+        <!-- Botón que redirige al formulario para agregar una nueva reserva -->
+        <a href="/reservas/crear/" class="btn btn-success">Agregar Reserva</a>
+    </div>
+
+    <!-- Tabla que muestra la lista de reservas registradas -->
+    <table class="table table-bordered" id="tablaReservas">
+        <!-- Encabezado de la tabla con los nombres de las columnas -->
+        <thead class="table-dark">
+            <tr>
+                <th>Campista</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Tipo Alojamiento</th>
+                <th>Número Personas</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Bucle que recorre las reservas para mostrarlas en las filas de la tabla -->
+            {% for reserva in reservas %}
+            <tr>
+                <!-- Información del campista asociado a la reserva -->
+                <td>{{ reserva.campista.nombre_completo }}</td>
+                <!-- Fecha de inicio de la reserva -->
+                <td>{{ reserva.fecha_inicio }}</td>
+                <!-- Fecha de finalización de la reserva -->
+                <td>{{ reserva.fecha_fin }}</td>
+                <!-- Tipo de alojamiento elegido para la reserva -->
+                <td>{{ reserva.tipo_alojamiento }}</td>
+                <!-- Número de personas incluidas en la reserva -->
+                <td>{{ reserva.numero_personas }}</td>
+                <!-- Estado actual de la reserva -->
+                <td>{{ reserva.estado }}</td>
+                <!-- Observaciones adicionales sobre la reserva -->
+                <td>
+                    {% if reserva.observaciones %}
+                        {{ reserva.observaciones }}
+                    {% else %}
+                        <span class="text-muted">Sin observaciones</span>
+                    {% endif %}
+                </td>
+                <!-- Opciones de acción: editar o eliminar la reserva -->
+                <td>
+                    <!-- Enlace para editar la reserva -->
+                    <a href="/reservas/editar/{{ reserva.id }}/" class="btn btn-warning btn-sm">Editar</a>
+                    <!-- Formulario para eliminar la reserva -->
+                    <form method="POST" action="/reservas/eliminar/{{ reserva.id }}/" style="display: inline;">
+                        {% csrf_token %} <!-- Token de seguridad para evitar ataques CSRF -->
+                        <button type="button" class="btn btn-danger btn-sm" 
+                                onclick="confirmarEliminacion(this)">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <!-- Mensaje mostrado si no hay reservas registradas -->
+            <tr>
+                <td colspan="8" class="text-center">No hay reservas registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Filtro para buscar reservas en la tabla
+    document.getElementById('buscadorReservas').addEventListener('input', function () {
+        let filtro = this.value.toLowerCase(); // Convierte el texto del buscador a minúsculas
+        let filas = document.querySelectorAll('#tablaReservas tbody tr'); // Obtiene todas las filas de la tabla
+        filas.forEach(fila => {
+            let textoFila = fila.textContent.toLowerCase(); // Convierte el contenido de la fila a minúsculas
+            // Muestra u oculta la fila dependiendo si coincide con el filtro
+            fila.style.display = textoFila.includes(filtro) ? '' : 'none';
+        });
+    });
+
+    // Función para confirmar la eliminación de una reserva
+    function confirmarEliminacion(button) {
+        iziToast.question({
+            message: `¿Estas seguro de que deseas eliminar la reserva?`, // Mensaje de confirmación
+            position: 'center', // Posición del mensaje
+            buttons: [
+                // Botón para confirmar la eliminación
+                ['<button>Confirmar</button>', function (instance, toast) {
+                    button.closest('form').submit(); // Envía el formulario asociado al botón
+                    instance.hide({ transitionOut: 'fadeOut' }, toast, 'button'); // Cierra el mensaje de confirmación
+                }, true],
+                // Botón para cancelar la acción
+                ['<button>Cancelar</button>', function (instance, toast) {
+                    instance.hide({ transitionOut: 'fadeOut' }, toast, 'button'); // Cierra el mensaje de confirmación
+                }]
+            ]
+        });
+    }
+</script>
+{% endblock %}

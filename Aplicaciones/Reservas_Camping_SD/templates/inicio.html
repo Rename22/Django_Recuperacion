@@ -1,0 +1,8 @@
+{% extends "plantilla.html" %}
+
+{% block titulo %}Inicio{% endblock %}
+
+{% block contenido %}
+<h2>Bienvenido, {{ request.session.usuario }}</h2>
+
+{% endblock %}

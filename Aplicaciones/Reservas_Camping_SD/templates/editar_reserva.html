@@ -1,0 +1,138 @@
+{% extends "plantilla.html" %}
+
+{% block titulo %}Editar Reserva{% endblock %}
+
+{% block contenido %}
+<div class="container">
+    <h2 class="mb-4">Editar Reserva</h2>
+    <form id="form_editar_reserva" method="POST" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ reserva.fecha_inicio }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="fecha_fin" class="form-label">Fecha de Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ reserva.fecha_fin }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="campista" class="form-label">Campista</label>
+            <select class="form-select" id="campista" name="campista" required>
+                {% for campista in campistas %}
+                <option value="{{ campista.id }}" {% if campista.id == reserva.campista.id %}selected{% endif %}>
+                    {{ campista.nombre_completo }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="tipo_alojamiento" class="form-label">Tipo de Alojamiento</label>
+            <select class="form-select" id="tipo_alojamiento" name="tipo_alojamiento" required>
+                <option value="Tienda" {% if reserva.tipo_alojamiento == 'Tienda' %}selected{% endif %}>Tienda</option>
+                <option value="Cabaña" {% if reserva.tipo_alojamiento == 'Cabaña' %}selected{% endif %}>Cabaña</option>
+                <option value="Caravana" {% if reserva.tipo_alojamiento == 'Caravana' %}selected{% endif %}>Caravana</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="numero_personas" class="form-label">Número de Personas</label>
+            <input type="number" class="form-control" id="numero_personas" name="numero_personas" value="{{ reserva.numero_personas }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-select" id="estado" name="estado" required>
+                <option value="Confirmada" {% if reserva.estado == 'Confirmada' %}selected{% endif %}>Confirmada</option>
+                <option value="Pendiente" {% if reserva.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Cancelada" {% if reserva.estado == 'Cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="observaciones" class="form-label">Observaciones</label>
+            <textarea class="form-control" id="observaciones" name="observaciones">{{ reserva.observaciones }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        <a href="/reservas/" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        // Regla personalizada para validar que la fecha de inicio sea mayor o igual a hoy
+        $.validator.addMethod("fechaValida", function (value, element) {
+            const hoy = new Date(); // Fecha actual en la zona horaria local
+            const fechaIngresada = new Date(value + "T00:00"); // Aseguramos que la hora no cause desfases
+
+            // Ajustamos las fechas para comparar solo la fecha (ignorando las horas)
+            hoy.setHours(0, 0, 0, 0);
+
+            // Validamos que la fecha ingresada sea hoy o una fecha futura
+            return fechaIngresada >= hoy;
+        }, "La fecha de inicio no puede ser anterior a hoy.");
+
+        $("#form_editar_reserva").validate({
+            rules: {
+                fecha_inicio: {
+                    required: true,
+                    date: true,
+                    fechaValida: true // Regla personalizada
+                },
+                fecha_fin: {
+                    required: true,
+                    date: true
+                },
+                campista: {
+                    required: true
+                },
+                tipo_alojamiento: {
+                    required: true
+                },
+                numero_personas: {
+                    required: true,
+                    digits: true,
+                    min: 1
+                },
+                estado: {
+                    required: true
+                }
+            },
+            messages: {
+                fecha_inicio: {
+                    required: "La fecha de inicio es obligatoria.",
+                    date: "Por favor, introduce una fecha válida.",
+                    fechaValida: "La fecha de inicio no puede ser anterior a hoy."
+                },
+                fecha_fin: {
+                    required: "La fecha de fin es obligatoria.",
+                    date: "Por favor, introduce una fecha válida."
+                },
+                campista: {
+                    required: "Selecciona un campista."
+                },
+                tipo_alojamiento: {
+                    required: "Selecciona el tipo de alojamiento."
+                },
+                numero_personas: {
+                    required: "Indica el número de personas.",
+                    digits: "Debe ser un número válido.",
+                    min: "Debe ser al menos 1 persona."
+                },
+                estado: {
+                    required: "Selecciona el estado de la reserva."
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    label.error {
+        color: red;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    input.error, textarea.error {
+        border: 2px solid red;
+    }
+</style>
+{% endblock %}
