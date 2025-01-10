@@ -15,6 +15,7 @@ class Campista(models.Model):
     correo_electronico = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15)
     direccion = models.TextField(blank=True, null=True)
+    usuario = models.ForeignKey('Usuario', on_delete=models.CASCADE)
 
 class Reserva(models.Model):
     TIPO_ALOJAMIENTO = [
@@ -32,6 +33,7 @@ class Reserva(models.Model):
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     campista = models.ForeignKey(Campista, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)  # Relación con Usuario
     tipo_alojamiento = models.CharField(max_length=50, choices=TIPO_ALOJAMIENTO)
     numero_personas = models.PositiveIntegerField()
     estado = models.CharField(max_length=50, choices=ESTADO_RESERVA)

@@ -70,119 +70,156 @@ def registro_usuario(request):
 #--------------------------------------------------------------------------------------------------------
 # Función para listar campistas
 def lista_campistas(request):
-    campistas = Campista.objects.annotate(
-        tiene_reservas=Count('reserva')  # Anota si cada campista tiene reservas
-    )
-    total_campistas = Campista.objects.count()  # Cuenta el total de campistas
-    total_reservas = Reserva.objects.count()  # Cuenta el total de reservas
+    if 'usuario' not in request.session:
+        return redirect('/')
 
-    # Renderiza la página de lista de campistas con los datos
+    usuario_actual = Usuario.objects.get(usuario=request.session['usuario'])
+    campistas = Campista.objects.filter(usuario=usuario_actual)
+    total_campistas = campistas.count()
+
     return render(request, 'lista_campistas.html', {
         'campistas': campistas,
         'total_campistas': total_campistas,
-        'total_reservas': total_reservas,
     })
-#----------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
 
 # Función para crear un nuevo campista
 def crear_campista(request):
-    if request.method == 'POST':  # Verifica si el formulario se envió mediante POST
-        nombre_completo = request.POST.get('nombre_completo')  # Obtiene el nombre completo
-        correo_electronico = request.POST.get('correo_electronico')  # Obtiene el correo electrónico
-        telefono = request.POST.get('telefono')  # Obtiene el teléfono
-        direccion = request.POST.get('direccion')  # Obtiene la dirección
+    if 'usuario' not in request.session:
+        return redirect('/')
 
-        # Verifica si el correo ya está registrado
-        if Campista.objects.filter(correo_electronico=correo_electronico).exists():
+    usuario_actual = Usuario.objects.get(usuario=request.session['usuario'])
+
+    if request.method == 'POST':
+        nombre_completo = request.POST.get('nombre_completo')
+        correo_electronico = request.POST.get('correo_electronico')
+        telefono = request.POST.get('telefono')
+        direccion = request.POST.get('direccion')
+
+        if Campista.objects.filter(correo_electronico=correo_electronico, usuario=usuario_actual).exists():
             messages.error(request, 'El correo electrónico ya está registrado.')
             return redirect('/campistas/crear/')
 
-        # Crea un nuevo campista
         Campista.objects.create(
             nombre_completo=nombre_completo,
             correo_electronico=correo_electronico,
             telefono=telefono,
-            direccion=direccion
+            direccion=direccion,
+            usuario=usuario_actual
         )
-        messages.success(request, 'Campista creado exitosamente.')  # Muestra un mensaje de éxito
-        return redirect('/campistas/')  # Redirige a la lista de campistas
-    return render(request, 'crear_campista.html')  # Renderiza la página para crear campistas
+        messages.success(request, 'Campista creado exitosamente.')
+        return redirect('/campistas/')
 
-# ---------------------------Función para editar un campista existente----------------------------------
+    return render(request, 'crear_campista.html')
+
 def editar_campista(request, id):
-    try:
-        campista = Campista.objects.get(id=id)  # Busca el campista por su ID
-    except Campista.DoesNotExist:
-        messages.error(request, 'El campista no existe.')  # Muestra un mensaje de error
+    if 'usuario' not in request.session:
+        return redirect('/')
+
+    usuario_actual = Usuario.objects.get(usuario=request.session['usuario'])
+    campista = Campista.objects.filter(id=id, usuario=usuario_actual).first()
+
+    if not campista:
+        messages.error(request, 'Campista no encontrado o no tiene permiso para editarlo.')
         return redirect('/campistas/')
 
-    if request.method == 'POST':  # Verifica si el formulario se envió mediante POST
-        campista.nombre_completo = request.POST.get('nombre_completo')  # Actualiza el nombre completo
-        campista.correo_electronico = request.POST.get('correo_electronico')  # Actualiza el correo
-        campista.telefono = request.POST.get('telefono')  # Actualiza el teléfono
-        campista.direccion = request.POST.get('direccion')  # Actualiza la dirección
-        campista.save()  # Guarda los cambios
-        messages.success(request, 'Campista actualizado exitosamente.')  # Muestra un mensaje de éxito
-        return redirect('/campistas/')  # Redirige a la lista de campistas
-    return render(request, 'editar_campista.html', {'campista': campista})  # Renderiza la página de edición
+    if request.method == 'POST':
+        campista.nombre_completo = request.POST.get('nombre_completo')
+        campista.correo_electronico = request.POST.get('correo_electronico')
+        campista.telefono = request.POST.get('telefono')
+        campista.direccion = request.POST.get('direccion')
+        campista.save()
+        messages.success(request, 'Campista actualizado exitosamente.')
+        return redirect('/campistas/')
+
+    return render(request, 'editar_campista.html', {'campista': campista})
 
 
-
-# --------------Función para eliminar un campista
+# Función para eliminar un campista
 def eliminar_campista(request, id):
-    try:
-        campista = Campista.objects.get(id=id)  # Busca el campista por su ID
-    except Campista.DoesNotExist:
-        messages.error(request, 'El campista no existe.')  # Muestra un mensaje de error
+    if 'usuario' not in request.session:
+        return redirect('/')
+
+    usuario_actual = Usuario.objects.get(usuario=request.session['usuario'])
+    campista = Campista.objects.filter(id=id, usuario=usuario_actual).first()
+
+    if not campista:
+        messages.error(request, 'Campista no encontrado o no tiene permiso para eliminarlo.')
         return redirect('/campistas/')
 
-    # Verifica si el campista tiene reservas asociadas
     if Reserva.objects.filter(campista=campista).exists():
         messages.error(request, 'No se puede eliminar el campista porque tiene reservas asociadas.')
         return redirect('/campistas/')
 
-    campista.delete()  # Elimina el campista
-    messages.success(request, 'Campista eliminado exitosamente.')  # Muestra un mensaje de éxito
-    return redirect('/campistas/')  # Redirige a la lista de campistas
+    campista.delete()
+    messages.success(request, 'Campista eliminado exitosamente.')
+    return redirect('/campistas/')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Función para listar reservas
 def lista_reservas(request):
-    reservas = Reserva.objects.all()  # Obtiene todas las reservas
-    total_campistas = Campista.objects.count()  # Cuenta el total de campistas
-    total_reservas = Reserva.objects.count()  # Cuenta el total de reservas
+    if 'usuario' not in request.session:
+        return redirect('/')
 
-    # Renderiza la página de lista de reservas con los datos
+    usuario_actual = request.session['usuario']
+    reservas = Reserva.objects.filter(usuario__usuario=usuario_actual)  # Filtra las reservas por usuario
+    total_campistas = Campista.objects.filter(reserva__usuario__usuario=usuario_actual).distinct().count()  # Filtra campistas relacionados con las reservas del usuario
+    total_reservas = reservas.count()  # Cuenta las reservas del usuario actual
+
     return render(request, 'lista_reservas.html', {
         'reservas': reservas,
         'total_campistas': total_campistas,
         'total_reservas': total_reservas,
     })
 
+
 # Función para crear una nueva reserva
 def crear_reserva(request):
-    campistas = Campista.objects.all()  # Obtiene todos los campistas para mostrar en el formulario
-    if request.method == 'POST':  # Verifica si el formulario se envió mediante POST
-        fecha_inicio = request.POST.get('fecha_inicio')  # Obtiene la fecha de inicio
-        fecha_fin = request.POST.get('fecha_fin')  # Obtiene la fecha de fin
-        campista_id = request.POST.get('campista')  # Obtiene el ID del campista
-        tipo_alojamiento = request.POST.get('tipo_alojamiento')  # Obtiene el tipo de alojamiento
-        numero_personas = request.POST.get('numero_personas')  # Obtiene el número de personas
-        estado = request.POST.get('estado')  # Obtiene el estado
-        observaciones = request.POST.get('observaciones')  # Obtiene las observaciones
+    if 'usuario' not in request.session:
+        return redirect('/')
 
-        # Busca el campista asociado a la reserva
-        campista = Campista.objects.filter(id=campista_id).first()
-        if not campista:  # Si no se encuentra el campista, muestra un mensaje de error
-            messages.error(request, 'Campista no encontrado.')
+    # Obtiene el usuario actual
+    usuario_actual = Usuario.objects.get(usuario=request.session['usuario'])
+
+    # Filtra los campistas relacionados directamente con el usuario actual
+    campistas = Campista.objects.filter(usuario=usuario_actual)  # Ajusta esto según tus modelos
+
+    if request.method == 'POST':
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        campista_id = request.POST.get('campista')
+        tipo_alojamiento = request.POST.get('tipo_alojamiento')
+        numero_personas = request.POST.get('numero_personas')
+        estado = request.POST.get('estado')
+        observaciones = request.POST.get('observaciones')
+
+        campista = Campista.objects.filter(id=campista_id, usuario=usuario_actual).first()
+        if not campista:
+            messages.error(request, 'Campista no encontrado o no pertenece a este usuario.')
             return redirect('/reservas/crear/')
 
-        # Crea una nueva reserva
         Reserva.objects.create(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
@@ -190,50 +227,50 @@ def crear_reserva(request):
             tipo_alojamiento=tipo_alojamiento,
             numero_personas=numero_personas,
             estado=estado,
-            observaciones=observaciones
+            observaciones=observaciones,
+            usuario=usuario_actual  # Asocia la reserva al usuario actual
         )
-        messages.success(request, 'Reserva creada exitosamente.')  # Muestra un mensaje de éxito
-        return redirect('/reservas/')  # Redirige a la lista de reservas
-    return render(request, 'crear_reserva.html', {'campistas': campistas})  # Renderiza la página para crear reservas
+        messages.success(request, 'Reserva creada exitosamente.')
+        return redirect('/reservas/')
+
+    return render(request, 'crear_reserva.html', {'campistas': campistas})
+
 
 # Función para editar una reserva existente
 def editar_reserva(request, id):
-    reserva = Reserva.objects.filter(id=id).first()  # Busca la reserva por su ID
-    if not reserva:  # Si no se encuentra la reserva, muestra un mensaje de error
-        messages.error(request, 'Reserva no encontrada.')
+    reserva = Reserva.objects.filter(id=id, usuario__usuario=request.session['usuario']).first()  # Filtra por usuario actual
+    if not reserva:
+        messages.error(request, 'Reserva no encontrada o no tiene permiso para editarla.')
         return redirect('/reservas/')
 
-    campistas = Campista.objects.all()  # Obtiene todos los campistas para el formulario
-    if request.method == 'POST':  # Verifica si el formulario se envió mediante POST
-        reserva.fecha_inicio = request.POST.get('fecha_inicio')  # Actualiza la fecha de inicio
-        reserva.fecha_fin = request.POST.get('fecha_fin')  # Actualiza la fecha de fin
-        campista_id = request.POST.get('campista')  # Obtiene el ID del campista actualizado
-        reserva.campista = Campista.objects.filter(id=campista_id).first()  # Actualiza el campista asociado
-        reserva.tipo_alojamiento = request.POST.get('tipo_alojamiento')  # Actualiza el tipo de alojamiento
-        reserva.numero_personas = request.POST.get('numero_personas')  # Actualiza el número de personas
-        reserva.estado = request.POST.get('estado')  # Actualiza el estado
-        reserva.observaciones = request.POST.get('observaciones')  # Actualiza las observaciones
-        reserva.save()  # Guarda los cambios
-        messages.success(request, 'Reserva actualizada exitosamente.')  # Muestra un mensaje de éxito
-        return redirect('/reservas/')  # Redirige a la lista de reservas
+    campistas = Campista.objects.all()
+    if request.method == 'POST':
+        reserva.fecha_inicio = request.POST.get('fecha_inicio')
+        reserva.fecha_fin = request.POST.get('fecha_fin')
+        campista_id = request.POST.get('campista')
+        reserva.campista = Campista.objects.filter(id=campista_id).first()
+        reserva.tipo_alojamiento = request.POST.get('tipo_alojamiento')
+        reserva.numero_personas = request.POST.get('numero_personas')
+        reserva.estado = request.POST.get('estado')
+        reserva.observaciones = request.POST.get('observaciones')
+        reserva.save()
 
-    # Formatea las fechas para mostrarlas en el campo de tipo "date"
-    reserva.fecha_inicio = reserva.fecha_inicio.strftime('%Y-%m-%d')
-    reserva.fecha_fin = reserva.fecha_fin.strftime('%Y-%m-%d')
+        messages.success(request, 'Reserva actualizada exitosamente.')
+        return redirect('/reservas/')
 
-    return render(request, 'editar_reserva.html', {'reserva': reserva, 'campistas': campistas})  # Renderiza la página de edición
+    return render(request, 'editar_reserva.html', {'reserva': reserva, 'campistas': campistas})
 
 # Función para eliminar una reserva existente
 def eliminar_reserva(request, id):
-    reserva = Reserva.objects.filter(id=id).first()  # Busca la reserva por su ID
-    if not reserva:  # Si no se encuentra la reserva, muestra un mensaje de error
-        messages.error(request, 'Reserva no encontrada.')
+    reserva = Reserva.objects.filter(id=id, usuario__usuario=request.session['usuario']).first()
+    if not reserva:
+        messages.error(request, 'Reserva no encontrada o no tiene permiso para eliminarla.')
         return redirect('/reservas/')
 
-    if request.method == 'POST':  # Si se confirmó la eliminación
-        reserva.delete()  # Elimina la reserva
-        messages.success(request, 'Reserva eliminada exitosamente.')  # Muestra un mensaje de éxito
-        return redirect('/reservas/')  # Redirige a la lista de reservas
+    if request.method == 'POST':
+        reserva.delete()
+        messages.success(request, 'Reserva eliminada exitosamente.')
+        return redirect('/reservas/')
 
-    messages.error(request, 'Acción no permitida.')  # Si no es POST, muestra un mensaje de error
-    return redirect('/reservas/')  # Redirige a la lista de reservas
+    messages.error(request, 'Acción no permitida.')
+    return redirect('/reservas/')
